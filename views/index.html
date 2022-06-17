@@ -10,10 +10,10 @@
    <meta charset="UTF-8">
  
    <meta name="viewport" content="width=device-width, initial-scale=1">
-   <!-- https와 경로 수정-->
-   <script type="text/javascript" src="js/web3.min.js"></script> 
+   <script type="text/javascript" src="js/web3.min.js"></script>
    <script type="text/javascript" src="js/ethereumjs-tx-1.3.3.min.js"></script>
    <script src="https://code.jquery.com/jquery-latest.js "></script>
+   <script type="text/javascript" src="js/qrcode.js"></script>
  
    <!-- bootsrtap CSS -->
    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.2/css/bootstrap.min.css">
@@ -33,47 +33,8 @@
          console.log("Ropsten Ethereum API version : ", version);
          console.log("web3: ", web3);
        }
-       $('#send').on('click', async function () {
-         let fromaddress = $("#fromaddress").val();
-           let toaddress = $("#toaddress").val();
-         let amount = $("#sendcoin").val();
-         let myPrivateKey = $("#mypassword").val();
-         
-       const privateKey = Buffer.from(myPrivateKey, 'hex');
-     if (DEBUG) console.log("privateKey: ", privateKey);
- 
-     web3.eth.getTransactionCount(fromaddress, (err, txCount) => {
-     // Build the transaction
-     const txObject = {
-   nonce: web3.utils.toHex(txCount),
-   to: toaddress,
-   value: web3.utils.toHex(web3.utils.toWei(amount, 'ether')),
-   gasLimit: web3.utils.toHex(21000),
-   gasPrice: web3.utils.toHex(web3.utils.toWei('10', 'gwei'))
-      }
- 
-      // Sign the transaction
-      const tx = new ethereumjs.Tx(txObject);
-      tx.sign(privateKey);
- 
-      const serializedTx = tx.serialize()
-      const raw = '0x' + serializedTx.toString('hex')
- 
-      // Broadcast the transaction
-      web3.eth.sendSignedTransaction(raw, (err, txHash) => {
-   console.log('txHash:', txHash)
-     // Now go check etherscan to see the transaction!
-     })
-     })  // end of txbuilder
-       })
-       $('#getbalance').on('click', async function () {
-        let fromaddress = $("#fromaddress").val();
-        let getbalance = await web3.eth.getBalance(fromaddress);
-        let balance = web3.utils.fromWei(getbalance, "ether")
- 
-        if (DEBUG) console.log("balance : ", balance + " ETH");
-       $('#message').text(" balance: " + balance + " ETH");
-       })
+       
+       // 신규계좌생성
        $('#newAccount').on('click', async function () {
  
          let account = web3.eth.accounts.create();
@@ -83,8 +44,8 @@
  
          $('#fromaddress').val(account.address);
  
-         $('#message').text(" account: " + account.address);
-         alert("Account 생성이 완료 되었습니다..!!!" + account.address);
+         $('#message').text("account / 계좌주소 : " + account.address);
+         alert("Account /계좌계정 생성이 완료 되었습니다..!!!" + account.address);
  
          // getting the value
          // let fromaddress = $("#fromaddress").val();
@@ -95,6 +56,78 @@
          // <h5>송신처 <input id="fromaddress" size="45" placeholder=""></input> </h5>
          // <h5>수신처 <input id="toaddress" size="45" value="0x09BCeaC0A761E13f4e4F1461F0fD43dA25791588" placeholder=""></input> </h5>
        })
+ 
+       
+       // 잔액조회 계좌정보
+       $('#getbalance').on('click', async function () {
+        let fromaddress = $("#fromaddress").val();
+        let getbalance = await web3.eth.getBalance(fromaddress);
+        let balance = web3.utils.fromWei(getbalance, "ether")
+ 
+        if (DEBUG) console.log("balance : ", balance + " ETH");
+       $('#message').text("balance / 계좌잔액 : " + balance + " ETH");
+       })
+ 
+       
+       // 게좌이체
+       $('#snedBtn').on('click', async function () {
+         let fromaddress = $("#fromaddress").val();
+           let toaddress = $("#toaddress").val();
+         let amount = $("#sendcoin").val();
+         let myPrivateKey = $("#mypassword").val();
+         
+         const privateKey = Buffer.from(myPrivateKey, 'hex');
+         if (DEBUG) console.log("privateKey: ", privateKey);
+ 
+         web3.eth.getTransactionCount(fromaddress, (err, txCount) => {
+         
+         // Build the transaction 이체금액점보
+         const txObject = {
+         nonce: web3.utils.toHex(txCount),
+         to: toaddress,
+         value: web3.utils.toHex(web3.utils.toWei(amount, 'ether')),
+         gasLimit: web3.utils.toHex(21000),
+         gasPrice: web3.utils.toHex(web3.utils.toWei('10', 'gwei'))
+         }
+ 
+         // Sign the transaction 수수료금액
+         const tx = new ethereumjs.Tx(txObject);
+         tx.sign(privateKey);
+ 
+         const serializedTx = tx.serialize()
+         const raw = '0x' + serializedTx.toString('hex')
+ 
+         // Broadcast the transaction 보내기
+         web3.eth.sendSignedTransaction(raw, (err, txHash) => {
+           console.log('txHash:', txHash)
+           // Now go check etherscan to see the transaction!
+           })
+         })
+       }) // end of txbuilder
+ 
+       // QR코드
+       // QR코드 공간생성
+       let qrcode = new QRCode(document.getElementById("qrcode"), {
+         width : 250,
+         height : 250
+       });
+ 
+       // QR코드 생성함수
+       function makeCode () {		
+         let elText = document.getElementById("fromaddress"); //생성된 계좌정보를 불러옴
+         
+         if (!elText.value) { //생성된 정보가 아닐경우
+           alert("Input a text");
+           elText.focus();
+           return;
+         }
+         qrcode.makeCode(elText.value); // 생성된 계좌와 정보값일 경우
+       } 
+       
+       $('#qrcodeBtn').on('click', function(){ // 버튼을 누를경우 makeCode함수실행
+         if (DEBUG) console.log("qrcodeBtn...... ");
+         makeCode();   
+       }) // end of txbuilder
      })
    </script>
  </head>
@@ -102,33 +135,63 @@
  <body>
    <br>
    <br>
-   <div class="container " role="main">
-     <h2><strong> My Ethereum Wallet </strong></h2>
+   <div class="container " role="main" style="width:100%;">
+     <!-- 타이틀 -->
+     <h2><strong> My Ethereum Wallet / 나의 이더리움 첫 지갑 </strong></h2>
      <div id="tablePlace"></div>
-     <button id="newAccount">New Account</button>
-     <button id="getbalance">get balance</button>
-     <button id="send">send token</button>
-     <br>
-     <br>
-     // 보내는 사람
-     <h5>송신처 <input id="fromaddress" size="45" value = "0x35Cf0C1D3657ed39ed09c9ad9a7c4E9275c8Ddb7" placeholder="보내는 계좌번호"></input> </h5>
-     
-     // 받는 사람
-     <h5>수신처 <input id="toaddress" size="45" placeholder="받는 계좌번호"></input> </h5>
-     
-     // 보내는 코인양
-     <h5>코인 <input id="sendcoin" size="45" placeholder="코인"></input> </h5>
-     
-     // 비밀번호를 90까지 설정
-     <h5>비밀번호 <input id="mypassword" type = password size="90" value ="068edbcd9989644fe88c38ebf91dd653996f89555266c11b6168088bcf236da1" placeholder="비밀번호"></input></h5>
-   </div>
-   <br>
-   <br>
-   <div class="container " role="main">
-     <h4><strong> Message </strong></h4>
-     <div id="message"></div>
+ 
+     <!-- 컨테이너 -->
+     <div>
+       <div style="display:flex;width:100%;">
+         <!-- 계좌정보 -->
+         <div>
+           <h3><strong> 계좌정보 </strong></h3>
+           <button id="newAccount">New Account / 신규계정생성</button>
+           <button id="getbalance">get balance / 내 계좌 잔액조회</button>
+           
+           <h5>내 계좌주소 <input id="fromaddress" size="45" placeholder="계좌번호"></input> </h5>
+           <br>
+           <!-- 이체정보 -->
+           <div>
+             <h3><strong> 이체정보 </strong></h3>
+             <p>
+               수신계좌 <input id="fromaddress" size="45" placeholder="보내는 계좌번호" value="0xFbd90e2b84c9D1b934bfcBe4071dDd14E4E81A56"></input>
+             </P>
+             <P>
+               계좌잔액 <span id="balance"></span>
+             </p>
+             <p>
+               이체계좌 <input id="toaddress" size="45" placeholder="계좌번호"></input> 
+             </p>
+             <p>
+               송금액 <input type="text" id="sendcoin" size="45" placeholder="보내실 금액"></input> ETH
+             </p>
+             <p>
+               비밀번호 <input type="password" id="mypassword" size="45" placeholder="비밀번호를 입력하세요"></input>
+             </p>		
+             <button id="snedBtn">send Token / 송금</button>
+           </div>	
+         </div>
+ 
+         <!-- QR정보 -->
+         <div class="container theme-showcase" role="main">
+           <h3><strong> QR정보 </strong></h3>
+           <button id="qrcodeBtn"> Create QRCode / QR생성 </button>
+           <h5>내 계좌주소<input value="" id="fromaddress" size="45" placeholder=""></input> </h5>
+           <div id="qrcode" style="width:250px; height:250px; margin-top:15px;"></div>
+         </div>
+       </div>
+ 
+       <!-- 메시지 -->
+       <div>
+         <h3><strong>Message / 메시지 </strong></h3>
+         <div id="message"></div>
+       </div>
+     </div>
    </div>
    <hr>
+ 
+   <!-- 풋터 -->
    <footer class="py-5 bg-dark">
      <div class="container">
        <p class="m-0 text-center text-white"><b>for education. </b></p>
